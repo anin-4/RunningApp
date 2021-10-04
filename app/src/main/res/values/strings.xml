@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">RunningApp</string>
+    <string-array name="filter_options">
+        <item>Date</item>
+        <item>Running Time</item>
+        <item>Distance</item>
+        <item>Average Speed</item>
+        <item>Calories Burned</item>
+    </string-array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="sort_by">Sort by:</string>
+    <string name="add_run">add run</string>
+    <string name="your_name">Your Name</string>
+    <string name="apply_changes">Apply Changes</string>
+    <string name="your_weight">Your Weight</string>
+    <string name="welcome_nplease_enter_your_name_and_weight">Welcome!\nPlease enter your name and weight.</string>
+    <string name="kg">kg</string>
+
+</resources>
