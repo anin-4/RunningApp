@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item android:id="@+id/fragmentRun"
+        android:title="Your Runs"
+        android:icon="@drawable/ic_run" />
+
+    <item android:id="@+id/fragmentStatistics"
+        android:title="Statistics"
+        android:icon="@drawable/ic_graph" />
+
+    <item android:id="@+id/fragmentSettings"
+        android:title="Settings"
+        android:icon="@drawable/ic_settings" />
+
+</menu>

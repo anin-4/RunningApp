@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/fragmentSetup">
+
+    <fragment
+        android:id="@+id/fragmentTracking"
+        android:name="com.example.runningapp.ui.fragments.FragmentTracking"
+        android:label="FragmentTracking" >
+        <action
+            android:id="@+id/action_fragmentTracking_to_fragmentRun2"
+            app:destination="@id/fragmentRun" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentStatistics"
+        android:name="com.example.runningapp.ui.fragments.FragmentStatistics"
+        android:label="FragmentStatistics" />
+    <fragment
+        android:id="@+id/fragmentSetup"
+        android:name="com.example.runningapp.ui.fragments.FragmentSetup"
+        android:label="FragmentSetup" >
+        <action
+            android:id="@+id/action_fragmentSetup_to_fragmentRun"
+            app:destination="@id/fragmentRun" />
+    </fragment>
+    <fragment
+        android:id="@+id/fragmentSettings"
+        android:name="com.example.runningapp.ui.fragments.FragmentSettings"
+        android:label="FragmentSettings" />
+    <fragment
+        android:id="@+id/fragmentRun"
+        android:name="com.example.runningapp.ui.fragments.FragmentRun"
+        android:label="FragmentRun" >
+        <action
+            android:id="@+id/action_fragmentRun_to_fragmentTracking2"
+            app:destination="@id/fragmentTracking" />
+    </fragment>
+</navigation>
