@@ -4,6 +4,10 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/fragmentSetup">
 
+    <action android:id="@+id/action_global_tracking"
+        app:destination="@id/fragmentTracking"
+        app:launchSingleTop="true"/>
+
     <fragment
         android:id="@+id/fragmentTracking"
         android:name="com.example.runningapp.ui.fragments.FragmentTracking"
