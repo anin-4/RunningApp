@@ -17,4 +17,7 @@ object Constants {
     const val NOTIFICATION_ID=1
 
     const val ACTION_SHOW_TRACKING_FRAGMENT="showTrackingFragment"
+
+    const val LOCATION_TRACKING_AVG_TIME=5000L
+    const val FASTEST_LOCATION_INTERVAL= 2000L
 }
