@@ -50,7 +50,34 @@ class TrackingService: LifecycleService() {
         val pathPoints = MutableLiveData<polylines>()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let {
+            when(it.action) {
+                ACTION_START_OR_RESUME_SERVICE -> {
+                    if(isFirstRun){
+                        startForegroundService()
+                        isFirstRun=false
+                    }
+                    else
+                        Log.d(TAG,"resuming service")
+                        startForegroundService()
+                }
+                ACTION_PAUSE_SERVICE -> {
+                    Log.d(TAG,"Paused service")
+                    pauseService()
+                }
+                ACTION_STOP_SERVICE -> {
+                    Log.d(TAG,"Stopped service")
+                }
+                else -> Log.d(TAG,"error")
+            }
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
 
+    private fun pauseService(){
+        isTracking.postValue(false)
+    }
 
     private fun postInitialValue(){
         isTracking.postValue(true)
@@ -120,28 +147,7 @@ class TrackingService: LifecycleService() {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.let {
-            when(it.action) {
-                ACTION_START_OR_RESUME_SERVICE -> {
-                    if(isFirstRun){
-                        startForegroundService()
-                        isFirstRun=false
-                    }
-                    else
-                    Log.d(TAG,"resuming service")
-                }
-                ACTION_PAUSE_SERVICE -> {
-                    Log.d(TAG,"Paused service")
-                }
-                ACTION_STOP_SERVICE -> {
-                    Log.d(TAG,"Stopped service")
-                }
-                else -> Log.d(TAG,"error")
-            }
-        }
-        return super.onStartCommand(intent, flags, startId)
-    }
+
 
     private fun startForegroundService(){
         val notificationManager= getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
