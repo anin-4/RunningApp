@@ -14,6 +14,7 @@ import com.example.runningapp.utils.Constants.ACTION_START_OR_RESUME_SERVICE
 import com.example.runningapp.utils.Constants.MAP_ZOOM
 import com.example.runningapp.utils.Constants.POLYLINE_COLOR
 import com.example.runningapp.utils.Constants.POLYLINE_WIDTH
+import com.example.runningapp.utils.TrackingUtility
 import com.example.runningapp.utils.hide
 import com.example.runningapp.utils.show
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -26,6 +27,8 @@ class FragmentTracking : Fragment() {
 
     private var isTracking:Boolean= false
     private var polyLines = mutableListOf<polyline>()
+
+    private var currentTimeMillis =  0L
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -61,6 +64,11 @@ class FragmentTracking : Fragment() {
                 polyLines=it
                 addLatestPolyLines()
                 moveCamera()
+            })
+            TrackingService.timeInMillis.observe(viewLifecycleOwner,{
+                currentTimeMillis=it
+                val formattedTimeInMillis = TrackingUtility.getFormattedStopWatchTime(currentTimeMillis,true)
+                binding.tvTimer.text= formattedTimeInMillis
             })
     }
 

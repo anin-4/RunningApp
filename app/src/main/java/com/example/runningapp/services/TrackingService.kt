@@ -28,12 +28,17 @@ import com.example.runningapp.utils.Constants.NOTIFICATION_CHANNEL_ID
 import com.example.runningapp.utils.Constants.NOTIFICATION_CHANNEL_NAME
 import com.example.runningapp.utils.Constants.NOTIFICATION_ID
 import com.example.runningapp.utils.Constants.TAG
+import com.example.runningapp.utils.Constants.TIMER_UPDATE_INTERVAL
 import com.example.runningapp.utils.TrackingUtility
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 typealias polyline = MutableList<LatLng>
@@ -45,9 +50,28 @@ class TrackingService: LifecycleService() {
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
+    private var timeInSeconds = MutableLiveData<Long>()
+
+    private var isTimerEnabled =false
+    private var lapTime = 0L
+    private var runTime = 0L
+    private var timeStarted = 0L
+    private var lastSecondTimeStamp = 0L
+
     companion object{
         val isTracking= MutableLiveData<Boolean>()
         val pathPoints = MutableLiveData<polylines>()
+        var timeInMillis = MutableLiveData<Long>()
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        postInitialValue()
+        fusedLocationProviderClient = FusedLocationProviderClient(this)
+
+        isTracking.observe(this, {
+            updateLocationTracking(it)
+        })
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -60,7 +84,7 @@ class TrackingService: LifecycleService() {
                     }
                     else
                         Log.d(TAG,"resuming service")
-                        startForegroundService()
+                        startTimer()
                 }
                 ACTION_PAUSE_SERVICE -> {
                     Log.d(TAG,"Paused service")
@@ -77,21 +101,15 @@ class TrackingService: LifecycleService() {
 
     private fun pauseService(){
         isTracking.postValue(false)
+        isTimerEnabled=false
     }
 
+    //below three functions are about adding initial values and adding latlng coordinates
     private fun postInitialValue(){
         isTracking.postValue(true)
         pathPoints.postValue(mutableListOf())
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-        postInitialValue()
-        fusedLocationProviderClient = FusedLocationProviderClient(this)
-
-        isTracking.observe(this, {
-            updateLocationTracking(it)
-        })
+        timeInSeconds.postValue(0L)
+        timeInMillis.postValue(0L)
     }
 
     private fun addEmptyPolyLine(){
@@ -111,22 +129,7 @@ class TrackingService: LifecycleService() {
         }
     }
 
-    private val locationCallback = object : LocationCallback(){
-        override fun onLocationResult(locationResult: LocationResult) {
-            super.onLocationResult(locationResult)
-
-            if(isTracking.value!!){
-                locationResult.locations.let{locations ->
-                    for (location in locations){
-                        addPathPoints(location)
-                        Log.d(TAG, "onLocationResult: ${location.latitude} ${location.longitude}")
-                    }
-
-                }
-            }
-        }
-    }
-
+    //below two function are about tracking locations and updating the livedata
     @SuppressLint("MissingPermission")
     private fun updateLocationTracking(isTracking:Boolean){
         if(isTracking){
@@ -147,13 +150,28 @@ class TrackingService: LifecycleService() {
         }
     }
 
+    private val locationCallback = object : LocationCallback(){
+        override fun onLocationResult(locationResult: LocationResult) {
+            super.onLocationResult(locationResult)
+
+            if(isTracking.value!!){
+                locationResult.locations.let{locations ->
+                    for (location in locations){
+                        addPathPoints(location)
+                        Log.d(TAG, "onLocationResult: ${location.latitude} ${location.longitude}")
+                    }
+
+                }
+            }
+        }
+    }
 
 
+    //from this function to the last function it is foreground service part with notification
     private fun startForegroundService(){
+        startTimer()
         val notificationManager= getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
         isTracking.postValue(true)
-        addEmptyPolyLine()
 
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O)
             createNotificationChannel(notificationManager)
@@ -187,4 +205,29 @@ class TrackingService: LifecycleService() {
 
             notificationManager.createNotificationChannel(channel)
     }
+
+    //Timer related functions will come here
+    private fun startTimer(){
+        addEmptyPolyLine()
+        isTracking.postValue(true)
+        isTimerEnabled=true
+        timeStarted= System.currentTimeMillis()
+
+        CoroutineScope(Dispatchers.Main).launch{
+            while(isTracking.value!!){
+
+                lapTime= System.currentTimeMillis()-timeStarted
+
+                timeInMillis.postValue(lapTime+runTime)
+               if(timeInMillis.value!! >= lastSecondTimeStamp + 1000L){
+                   timeInSeconds.postValue(timeInSeconds.value!! + 1)
+                   lastSecondTimeStamp+=1000L
+               }
+                delay(TIMER_UPDATE_INTERVAL)
+
+            }
+            runTime+=lapTime
+        }
+    }
 }
+
