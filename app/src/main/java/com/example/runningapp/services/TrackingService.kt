@@ -53,6 +53,8 @@ class TrackingService: LifecycleService() {
 
     private var timeInSeconds = MutableLiveData<Long>()
 
+    private var serviceKilled = false
+
     @Inject
    lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
@@ -61,12 +63,14 @@ class TrackingService: LifecycleService() {
 
     lateinit var currentNotificationBuilder: NotificationCompat.Builder
 
+    //all varibles for timer
     private var isTimerEnabled =false
     private var lapTime = 0L
     private var runTime = 0L
     private var timeStarted = 0L
     private var lastSecondTimeStamp = 0L
 
+    //live data
     companion object{
         val isTracking= MutableLiveData<Boolean>()
         val pathPoints = MutableLiveData<polylines>()
@@ -77,7 +81,6 @@ class TrackingService: LifecycleService() {
         super.onCreate()
         postInitialValue()
         currentNotificationBuilder=baseNotificationBuilder
-//        fusedLocationProviderClient = FusedLocationProviderClient(this)
 
         isTracking.observe(this, {
             updateLocationTracking(it)
@@ -94,15 +97,13 @@ class TrackingService: LifecycleService() {
                         isFirstRun=false
                     }
                     else
-                        Log.d(TAG,"resuming service")
                         startTimer()
                 }
                 ACTION_PAUSE_SERVICE -> {
-                    Log.d(TAG,"Paused service")
                     pauseService()
                 }
                 ACTION_STOP_SERVICE -> {
-                    Log.d(TAG,"Stopped service")
+                    killService()
                 }
                 else -> Log.d(TAG,"error")
             }
@@ -117,7 +118,7 @@ class TrackingService: LifecycleService() {
 
     //below three functions are about adding initial values and adding latlng coordinates
     private fun postInitialValue(){
-        isTracking.postValue(true)
+        isTracking.postValue(false)
         pathPoints.postValue(mutableListOf())
         timeInSeconds.postValue(0L)
         timeInMillis.postValue(0L)
@@ -134,7 +135,7 @@ class TrackingService: LifecycleService() {
         location?.let{
             val pos = LatLng(location.latitude,location.longitude)
             pathPoints.value?.apply {
-                last().add(pos)
+                last()?.add(pos)
                 pathPoints.postValue(this)
             }
         }
@@ -164,12 +165,10 @@ class TrackingService: LifecycleService() {
     private val locationCallback = object : LocationCallback(){
         override fun onLocationResult(locationResult: LocationResult) {
             super.onLocationResult(locationResult)
-
             if(isTracking.value!!){
-                locationResult.locations.let{locations ->
+                locationResult?.locations?.let{locations ->
                     for (location in locations){
                         addPathPoints(location)
-                        Log.d(TAG, "onLocationResult: ${location.latitude} ${location.longitude}")
                     }
 
                 }
@@ -188,12 +187,13 @@ class TrackingService: LifecycleService() {
             createNotificationChannel(notificationManager)
 
         startForeground(NOTIFICATION_ID,baseNotificationBuilder.build())
-
-        timeInSeconds.observe(this, {
-            val notification = currentNotificationBuilder
-                .setContentText(TrackingUtility.getFormattedStopWatchTime(it * 1000L))
-            notificationManager.notify(NOTIFICATION_ID, notification.build())
-        })
+        if(!serviceKilled) {
+            timeInSeconds.observe(this, {
+                val notification = currentNotificationBuilder
+                    .setContentText(TrackingUtility.getFormattedStopWatchTime(it * 1000L))
+                notificationManager.notify(NOTIFICATION_ID, notification.build())
+            })
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -247,13 +247,26 @@ class TrackingService: LifecycleService() {
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        //The below 3 lines of code are strange
         currentNotificationBuilder.javaClass.getDeclaredField("mActions").apply {
             isAccessible = true
             set(currentNotificationBuilder, ArrayList<NotificationCompat.Action>())
         }
-        currentNotificationBuilder = baseNotificationBuilder
-            .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
-        notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        if(!serviceKilled) {
+            currentNotificationBuilder = baseNotificationBuilder
+                .addAction(R.drawable.ic_pause_black_24dp, notificationActionText, pendingIntent)
+            notificationManager.notify(NOTIFICATION_ID, currentNotificationBuilder.build())
+        }
     }
+
+    private fun killService() {
+        serviceKilled = true
+        isFirstRun = true
+        pauseService()
+        postInitialValue()
+        stopForeground(true)
+        stopSelf()
+    }
+
 }
 

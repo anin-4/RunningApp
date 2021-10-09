@@ -16,5 +16,6 @@
     <string name="your_weight">Your Weight</string>
     <string name="welcome_nplease_enter_your_name_and_weight">Welcome!\nPlease enter your name and weight.</string>
     <string name="kg">kg</string>
+    <string name="cancel">cancel run</string>
 
 </resources>
