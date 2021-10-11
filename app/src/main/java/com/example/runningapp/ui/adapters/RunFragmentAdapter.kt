@@ -51,6 +51,7 @@ class RunFragmentAdapter:RecyclerView.Adapter<RunFragmentAdapter.RunFragmentView
 
             val caloriesBurned = "${run.caloriesBurnt}kcal"
             findViewById<TextView>(R.id.tvCalories)?.text = caloriesBurned
+
         }
     }
 
